@@ -1,0 +1,49 @@
+{% extends "admin/base_site.html" %}
+{% load i18n %}
+
+{% block breadcrumbs %}
+<div class="breadcrumbs">
+  <a href="{% url 'admin:index' %}">{% translate 'Home' %}</a>
+  &rsaquo; <a href="{% url 'admin:app_list' app_label='backend' %}">Backend</a>
+  &rsaquo; <a href="{% url 'admin:backend_productinfo_changelist' %}">Product info</a>
+  &rsaquo; Массовое обновление цен
+</div>
+{% endblock %}
+
+{% block content %}
+<h1>Массовое обновление цен</h1>
+
+<p class="help">
+  Укажите процент наценки. Положительное значение увеличит цену,
+  отрицательное — уменьшит. Если выбрана категория, изменения
+  применятся только к товарам этой категории.
+</p>
+
+<form method="post" novalidate>
+  {% csrf_token %}
+
+  {% if form.non_field_errors %}
+    <p class="errornote">{{ form.non_field_errors }}</p>
+  {% endif %}
+
+  <fieldset class="module aligned">
+    {% for field in form %}
+      <div class="form-row{% if field.errors %} errors{% endif %}">
+        {{ field.errors }}
+        <div>
+          {{ field.label_tag }}
+          {{ field }}
+          {% if field.help_text %}
+            <div class="help">{{ field.help_text }}</div>
+          {% endif %}
+        </div>
+      </div>
+    {% endfor %}
+  </fieldset>
+
+  <div class="submit-row">
+    <input type="submit" value="Применить" class="default">
+    <a href="{% url 'admin:backend_productinfo_changelist' %}" class="button cancel-link">Отмена</a>
+  </div>
+</form>
+{% endblock %}

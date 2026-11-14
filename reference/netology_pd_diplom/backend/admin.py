@@ -1,89 +1,109 @@
+# backend/admin.py
 from django.contrib import admin
-from django.http import HttpResponseRedirect
 from django.urls import path
-from django.contrib.auth.admin import UserAdmin
-from django.contrib import messages
 
-from backend.models import User, Shop, Category, Product, ProductInfo, Parameter, ProductParameter, Order, OrderItem, \
-    Contact, ConfirmEmailToken
-from backend.tasks import do_import
-
-@admin.register(User)
-class CustomUserAdmin(UserAdmin):
-    """
-    Панель управления пользователями
-    """
-    model = User
-
-    fieldsets = (
-        (None, {'fields': ('email', 'password', 'type')}),
-        ('Personal info', {'fields': ('first_name', 'last_name', 'company', 'position')}),
-        ('Permissions', {
-            'fields': ('is_active', 'is_staff', 'is_superuser', 'groups', 'user_permissions'),
-        }),
-        ('Important dates', {'fields': ('last_login', 'date_joined')}),
-    )
-    list_display = ('email', 'first_name', 'last_name', 'is_staff')
+from . import admin_views
+from .models import (
+    Shop, Category, Product, ProductInfo,
+    Parameter, ProductParameter,
+    Contact, Order, OrderItem,
+)
 
 
 @admin.register(Shop)
 class ShopAdmin(admin.ModelAdmin):
-    change_list_template = 'admin/backend/shop/change_list.html'  # если нужна кнопка в списке
+    list_display = ('name', 'state', 'user')
+    list_filter = ('state',)
+    search_fields = ('name',)
+    change_list_template = 'admin/backend/shop/change_list.html'
 
     def get_urls(self):
         urls = super().get_urls()
         custom_urls = [
-            path('run-import/', self.admin_site.admin_view(self.run_import), name='shop-run-import'),
+            path(
+                'import-products/',
+                self.admin_site.admin_view(admin_views.ImportProductsView.as_view()),
+                name='shop-import-products',
+            ),
         ]
         return custom_urls + urls
-
-    def run_import(self, request):
-        test_url = 'http://127.0.0.1:8000/media/shop1.yaml'
-        do_import.delay(test_url, request.user.id)
-        messages.success(request, 'Задача импорта запущена в фоне.')
-        return HttpResponseRedirect('../')
 
 
 @admin.register(Category)
 class CategoryAdmin(admin.ModelAdmin):
-    pass
+    list_display = ('name',)
+    search_fields = ('name',)
 
 
 @admin.register(Product)
 class ProductAdmin(admin.ModelAdmin):
-    pass
-
+    list_display = ('name', 'category')
+    list_filter = ('category',)
+    search_fields = ('name',)
 
 @admin.register(ProductInfo)
 class ProductInfoAdmin(admin.ModelAdmin):
-    pass
+    list_display = ('product', 'shop', 'price', 'price_rrc', 'quantity')
+    list_filter = ('shop', 'product__category')
+    search_fields = ('product__name',)
+    list_select_related = ('product', 'shop')
+    change_list_template = 'admin/backend/productinfo/change_list.html'
+
+    def get_urls(self):
+        urls = super().get_urls()
+        custom_urls = [
+            path(
+                'update-prices/',
+                self.admin_site.admin_view(admin_views.UpdatePricesView.as_view()),
+                name='productinfo-update-prices',
+            ),
+            path(
+                'stock-report/',
+                self.admin_site.admin_view(admin_views.StockReportView.as_view()),
+                name='productinfo-stock-report',
+            ),
+        ]
+        return custom_urls + urls
 
 
 @admin.register(Parameter)
 class ParameterAdmin(admin.ModelAdmin):
-    pass
+    list_display = ('name',)
+    search_fields = ('name',)
 
 
 @admin.register(ProductParameter)
 class ProductParameterAdmin(admin.ModelAdmin):
-    pass
-
-
-@admin.register(Order)
-class OrderAdmin(admin.ModelAdmin):
-    pass
-
-
-@admin.register(OrderItem)
-class OrderItemAdmin(admin.ModelAdmin):
-    pass
+    list_display = ('product_info', 'parameter', 'value')
+    list_filter = ('parameter',)
 
 
 @admin.register(Contact)
 class ContactAdmin(admin.ModelAdmin):
-    pass
+    list_display = ('user', 'city', 'street', 'phone')
+    search_fields = ('user__username', 'phone')
 
 
-@admin.register(ConfirmEmailToken)
-class ConfirmEmailTokenAdmin(admin.ModelAdmin):
-    list_display = ('user', 'key', 'created_at',)
+@admin.register(Order)
+class OrderAdmin(admin.ModelAdmin):
+    list_display = ('id', 'user', 'state', 'dt')
+    list_filter = ('state',)
+    search_fields = ('user__username',)
+    change_list_template = 'admin/backend/order/change_list.html'
+
+    def get_urls(self):
+        urls = super().get_urls()
+        custom_urls = [
+            path(
+                'create-order/',
+                self.admin_site.admin_view(admin_views.CreateOrderView.as_view()),
+                name='order-create',
+            ),
+        ]
+        return custom_urls + urls
+
+
+@admin.register(OrderItem)
+class OrderItemAdmin(admin.ModelAdmin):
+    list_display = ('order', 'product_info', 'quantity')
+    list_filter = ('order__state',)

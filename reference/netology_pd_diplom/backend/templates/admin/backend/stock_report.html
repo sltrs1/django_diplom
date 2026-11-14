@@ -1,0 +1,71 @@
+{% extends "admin/base_site.html" %}
+{% load i18n humanize %}
+
+{% block breadcrumbs %}
+<div class="breadcrumbs">
+  <a href="{% url 'admin:index' %}">{% translate 'Home' %}</a>
+  &rsaquo; <a href="{% url 'admin:app_list' app_label='backend' %}">Backend</a>
+  &rsaquo; <a href="{% url 'admin:backend_productinfo_changelist' %}">Product info</a>
+  &rsaquo; Отчёт по остаткам
+</div>
+{% endblock %}
+
+{% block content %}
+<h1>Отчёт по остаткам</h1>
+
+<p class="help">
+  Всего записей: <strong>{{ total }}</strong>.
+  Строки с количеством меньше 10 подсвечены красным.
+</p>
+
+{% if rows %}
+  <div class="results">
+    <table id="result_list">
+      <thead>
+        <tr>
+          <th scope="col">ID</th>
+          <th scope="col">Товар</th>
+          <th scope="col">Категория</th>
+          <th scope="col">Магазин</th>
+          <th scope="col">Цена</th>
+          <th scope="col">РРЦ</th>
+          <th scope="col">Количество</th>
+          <th scope="col">Артикул</th>
+          <th scope="col">Модель</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in rows %}
+          <tr class="{% cycle 'row1' 'row2' %}">
+            <td>{{ row.id }}</td>
+            <td>
+              <a href="{% url 'admin:backend_productinfo_change' row.id %}">
+                {{ row.product_name }}
+              </a>
+            </td>
+            <td>{{ row.category }}</td>
+            <td>{{ row.shop }}</td>
+            <td>{{ row.price|intcomma }} ₽</td>
+            <td>{{ row.price_rrc|intcomma }} ₽</td>
+            <td>
+              {% if row.quantity < 10 %}
+                <span style="color:#ba2121;font-weight:bold;">{{ row.quantity }}</span>
+              {% else %}
+                {{ row.quantity }}
+              {% endif %}
+            </td>
+            <td>{{ row.article }}</td>
+            <td>{{ row.model }}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+{% else %}
+  <p>Нет данных для отображения.</p>
+{% endif %}
+
+<div class="submit-row">
+  <a href="{% url 'admin:backend_productinfo_changelist' %}" class="button cancel-link">Назад к списку</a>
+</div>
+{% endblock %}
