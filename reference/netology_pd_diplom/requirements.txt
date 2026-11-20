@@ -8,3 +8,4 @@ setuptools
 psycopg2
 celery~=5.7.0
 redis~=6.4.0
+python-dotenv

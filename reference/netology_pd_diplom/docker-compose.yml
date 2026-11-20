@@ -4,13 +4,13 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data/
     environment:
-      - POSTGRES_DB=diplom_db
-      - POSTGRES_USER=diplom_user
-      - POSTGRES_PASSWORD=password
+      - POSTGRES_DB=${DB_NAME}
+      - POSTGRES_USER=${DB_USER}
+      - POSTGRES_PASSWORD=${DB_PASSWORD}
     ports:
       - "5432:5432"
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U diplom_user -d diplom_db"]
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}"]
       interval: 5s
       timeout: 5s
       retries: 5
@@ -43,12 +43,13 @@ services:
     environment:
       - DJANGO_SETTINGS_MODULE=netology_pd_diplom.settings
       # Переопределяем параметры подключения к БД для работы внутри Docker-сети
-      - DB_HOST=db
-      - DB_NAME=diplom_db
-      - DB_USER=diplom_user
-      - DB_PASSWORD=password
-      - CELERY_BROKER_URL=redis://redis:6379/0
-      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+      - DB_HOST=${DB_HOST}
+      - DB_NAME=${DB_NAME}
+      - DB_USER=${DB_USER}
+      - DB_PASSWORD=${DB_PASSWORD}
+      - CELERY_BROKER_URL=${CELERY_BROKER_URL}
+      - CELERY_RESULT_BACKEND=${CELERY_RESULT_BACKEND}
+      - SECRET_KEY=${SECRET_KEY}
 
   celery:
     build: .
@@ -60,12 +61,13 @@ services:
       - redis
     environment:
       - DJANGO_SETTINGS_MODULE=netology_pd_diplom.settings
-      - DB_HOST=db
-      - DB_NAME=diplom_db
-      - DB_USER=diplom_user
-      - DB_PASSWORD=password
-      - CELERY_BROKER_URL=redis://redis:6379/0
-      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+      - DB_HOST=${DB_HOST}
+      - DB_NAME=${DB_NAME}
+      - DB_USER=${DB_USER}
+      - DB_PASSWORD=${DB_PASSWORD}
+      - CELERY_BROKER_URL=${CELERY_BROKER_URL}
+      - CELERY_RESULT_BACKEND=${CELERY_RESULT_BACKEND}
+      - SECRET_KEY=${SECRET_KEY}
 
 volumes:
   postgres_data:
