@@ -1,8 +1,10 @@
-from typing import Type
+from typing import Type  # noqa: UP035
+
 from django.conf import settings
 from django.db.models.signals import post_save
-from django.dispatch import receiver, Signal
+from django.dispatch import Signal, receiver
 from django_rest_passwordreset.signals import reset_password_token_created
+
 from backend.models import ConfirmEmailToken, User
 from backend.tasks import send_email
 
@@ -21,7 +23,9 @@ def password_reset_token_created(sender, instance, reset_password_token, **kwarg
 
 
 @receiver(post_save, sender=User)
-def new_user_registered_signal(sender: Type[User], instance: User, created: bool, **kwargs):
+def new_user_registered_signal(
+    sender: Type[User], instance: User, created: bool, **kwargs
+):
     """Отправляем письмо с подтверждением почты."""
     if created and not instance.is_active:
         token, _ = ConfirmEmailToken.objects.get_or_create(user_id=instance.pk)

@@ -1,10 +1,19 @@
 from celery import shared_task
-from django.core.mail import send_mail
 from django.conf import settings
-from backend.models import Shop, Category, Product, ProductInfo, Parameter, ProductParameter
-from ujson import loads as load_json
-from yaml import load as load_yaml, Loader
+from django.core.mail import send_mail
 from requests import get
+from ujson import loads as load_json
+from yaml import Loader
+from yaml import load as load_yaml
+
+from backend.models import (
+    Category,
+    Parameter,
+    Product,
+    ProductInfo,
+    ProductParameter,
+    Shop,
+)
 
 
 @shared_task
@@ -20,31 +29,31 @@ def do_import(url, user_id):
     """Асинхронный импорт товаров из YAML по URL."""
     stream = get(url).content
     data = load_yaml(stream, Loader=Loader)
-    shop, _ = Shop.objects.get_or_create(name=data['shop'], user_id=user_id)
+    shop, _ = Shop.objects.get_or_create(name=data["shop"], user_id=user_id)
 
-    for category in data['categories']:
+    for category in data["categories"]:
         category_object, _ = Category.objects.get_or_create(
-            id=category['id'], name=category['name']
+            id=category["id"], name=category["name"]
         )
         category_object.shops.add(shop.id)
         category_object.save()
 
     ProductInfo.objects.filter(shop_id=shop.id).delete()
 
-    for item in data['goods']:
+    for item in data["goods"]:
         product, _ = Product.objects.get_or_create(
-            name=item['name'], category_id=item['category']
+            name=item["name"], category_id=item["category"]
         )
         product_info = ProductInfo.objects.create(
             product_id=product.id,
-            external_id=item['id'],
-            model=item['model'],
-            price=item['price'],
-            price_rrc=item['price_rrc'],
-            quantity=item['quantity'],
+            external_id=item["id"],
+            model=item["model"],
+            price=item["price"],
+            price_rrc=item["price_rrc"],
+            quantity=item["quantity"],
             shop_id=shop.id,
         )
-        for name, value in item['parameters'].items():
+        for name, value in item["parameters"].items():
             parameter_object, _ = Parameter.objects.get_or_create(name=name)
             ProductParameter.objects.create(
                 product_info_id=product_info.id,
